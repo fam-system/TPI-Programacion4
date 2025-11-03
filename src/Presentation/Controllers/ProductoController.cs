@@ -3,6 +3,7 @@ using Application.Models;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -42,10 +43,16 @@ public class ProductoController : ControllerBase
     }
     [Authorize(Roles = "Oficina")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Producto producto)
+    public async Task<IActionResult> Update(int id, UpdateProductoDTO dto)
     {
-        if (id != producto.Id) return BadRequest();
+        var producto = await _repository.GetByIdAsync(id);
+        if (producto == null)
+            return NotFound();
+
+        producto.Nombre = dto.Nombre;
+  
         await _repository.UpdateAsync(producto);
+
         return NoContent();
     }
 

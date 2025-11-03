@@ -28,15 +28,15 @@ namespace Presentation.Middlewares
                 {
                     // Seteamos el codigo de estado y log correcto en cada caso
                     case NotFoundException notFoundEx:
-                        _logger.LogWarning(notFoundEx, "Not Found Exception");
+                        _logger.LogWarning(notFoundEx, "Error no encontrado");
                         context.Response.StatusCode = StatusCodes.Status404NotFound;
                         break;
                     case ValidationException validationEx:
-                        _logger.LogWarning(validationEx, "Validation Exception");
+                        _logger.LogWarning(validationEx, "Error de validacion");
                         context.Response.StatusCode = StatusCodes.Status400BadRequest;
                         break;
                     default:
-                        _logger.LogError(ex, "Undhandled Exception");
+                        _logger.LogError(ex, "Error interno");
                         context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                         break;
                 }

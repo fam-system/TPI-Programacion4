@@ -3,6 +3,7 @@ using Application.Models;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Application.Models.UpdateDTO;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -44,10 +45,17 @@ public class ArchivoController : ControllerBase
 
     [Authorize(Roles = "Oficina")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Archivo archivo)
+    public async Task<IActionResult> Update(int id, UpdateArchivoDTO dto)
     {
-        if (id != archivo.Id) return BadRequest();
+
+        var archivo = await _repository.GetByIdAsync(id);
+        if (archivo == null)
+            return NotFound();
+
+        archivo.Nombre = dto.Nombre;
+
         await _repository.UpdateAsync(archivo);
+
         return NoContent();
     }
 
