@@ -1,25 +1,23 @@
 ﻿using Application.Interfaces;
 using Application.Models;
+using Application.Models.CreateDTO;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-
 
 namespace Web.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class ProcesoController : ControllerBase
     {
-        private readonly IProcesoRepository _procesoRepository;
+        private readonly IProcesoService _procesoService;
 
-        public ProcesoController(IProcesoRepository procesoRepository)
+        public ProcesoController(IProcesoService procesoService)
         {
-            _procesoRepository = procesoRepository;
+            _procesoService = procesoService;
         }
 
-        
         [Authorize(Roles = "Oficina")]
         [HttpPost]
         public async Task<ActionResult> Create(ProcesoCreateDTO dto)
@@ -35,42 +33,36 @@ namespace Web.Controllers
                 EstadoProceso = "Pendiente"
             };
 
-            await _procesoRepository.AddAsync(proceso);
+            await _procesoService.AddAsync(proceso);
             return CreatedAtAction(nameof(GetById), new { id = proceso.Id }, proceso);
         }
 
-       
         [Authorize(Roles = "Oficina, Encargado")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProcesoDTO>>> GetAll()
         {
-            var procesos = await _procesoRepository.GetAllAsync();
-            var result = new List<ProcesoDTO>();
+            var procesos = await _procesoService.GetAllAsync();
 
-            foreach (var p in procesos)
+            var result = procesos.Select(p => new ProcesoDTO
             {
-                result.Add(new ProcesoDTO
-                {
-                    Id = p.Id,
-                    Nombre = p.Nombre,
-                    FechaInicio = p.FechaInicio,
-                    FechaFin = p.FechaFin,
-                    CantidadProducto = p.CantidadProducto,
-                    EstadoProceso = p.EstadoProceso,
-                    FechaEntrega = p.FechaEntrega,
-                    ProductoId = p.ProductoId
-                });
-            }
+                Id = p.Id,
+                Nombre = p.Nombre,
+                FechaInicio = p.FechaInicio,
+                FechaFin = p.FechaFin,
+                CantidadProducto = p.CantidadProducto,
+                EstadoProceso = p.EstadoProceso,
+                FechaEntrega = p.FechaEntrega,
+                ProductoId = p.ProductoId
+            });
 
             return Ok(result);
         }
 
-      
         [Authorize(Roles = "Oficina, Encargado, Operario")]
         [HttpGet("{id}")]
         public async Task<ActionResult<ProcesoDTO>> GetById(int id)
         {
-            var p = await _procesoRepository.GetByIdAsync(id);
+            var p = await _procesoService.GetByIdAsync(id);
             if (p == null) return NotFound();
 
             var dto = new ProcesoDTO
@@ -88,43 +80,41 @@ namespace Web.Controllers
             return Ok(dto);
         }
 
-        
         [Authorize(Roles = "Operario")]
         [HttpPut("Start/{id}")]
         public async Task<ActionResult> StartProceso(int id)
         {
-            var proceso = await _procesoRepository.GetByIdAsync(id);
-            if (proceso == null) return NotFound();
-
-            proceso.FechaInicio = DateTime.Now;
-            proceso.EstadoProceso = "En Proceso";
-            await _procesoRepository.UpdateAsync(proceso);
-
-            return NoContent();
+            try
+            {
+                await _procesoService.StartProcesoAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
         }
 
-        // PUT: api/Proceso/End/{id}
         [Authorize(Roles = "Operario")]
         [HttpPut("End/{id}")]
         public async Task<ActionResult> EndProceso(int id)
         {
-            var proceso = await _procesoRepository.GetByIdAsync(id);
-            if (proceso == null) return NotFound();
-
-            proceso.FechaFin = DateTime.Now;
-            proceso.EstadoProceso = "Finalizado";
-            await _procesoRepository.UpdateAsync(proceso);
-
-            return NoContent();
+            try
+            {
+                await _procesoService.EndProcesoAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         [Authorize(Roles = "Oficina")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
-            var proceso = await _procesoRepository.GetByIdAsync(id);
-            if (proceso == null) return NotFound();
-            await _procesoRepository.DeleteAsync(proceso);
+            await _procesoService.DeleteAsync(id);
             return NoContent();
         }
     }

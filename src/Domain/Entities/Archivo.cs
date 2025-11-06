@@ -9,11 +9,9 @@ namespace Domain.Entities
         [Key]
         public int Id { get; set; }
 
-        [Required]
-        [MaxLength(150)]
+        
         public string Nombre { get; set; }
 
-        // FK a Producto
         [ForeignKey("Producto")]
         public int ProductoId { get; set; }
 

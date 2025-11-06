@@ -1,8 +1,5 @@
 ﻿using Application.Interfaces;
-using Application.Models;
-using BCrypt.Net;
-using Domain.Entities;
-using Domain.Enums;
+using Application.Models.CreateDTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,128 +9,60 @@ namespace Web.Controllers
     [Route("api/[controller]")]
     public class UsuariosController : ControllerBase
     {
-        private readonly IUsuarioRepository _usuarioRepository;
+        private readonly IUsuarioService _usuarioService;
 
-        public UsuariosController(IUsuarioRepository usuarioRepository)
+        public UsuariosController(IUsuarioService usuarioService)
         {
-            _usuarioRepository = usuarioRepository;
+            _usuarioService = usuarioService;
         }
 
-        // GET api/usuarios
         [Authorize(Roles = "Oficina")]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Usuario>>> GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var usuarios = await _usuarioRepository.GetAllAsync();
-            var dtoList = usuarios.Select(u => new UsuarioDTO
-            {
-                Id = u.Id,
-                Nombre = u.Nombre,
-                Apellido = u.Apellido,
-                Estado = u.Estado.ToString(),
-                Rol = u.Rol.ToString()
-            });
-            return Ok(dtoList);
+            var usuarios = await _usuarioService.GetAllAsync();
+            return Ok(usuarios);
         }
 
-
-        //GET api/usuarios/activos
         [Authorize(Roles = "Oficina")]
         [HttpGet("Activos")]
-        public async Task<ActionResult<IEnumerable<Usuario>>> GetActivos()
+        public async Task<IActionResult> GetActivos()
         {
-            var usuarios = await _usuarioRepository.GetActivosAsync();
-            var dtoList = usuarios.Select(u => new UsuarioDTO
-            {
-                Id = u.Id,
-                Nombre = u.Nombre,
-                Apellido = u.Apellido,
-                Estado = u.Estado.ToString(),
-                Rol = u.Rol.ToString()
-            });
-            return Ok(dtoList);
+            var usuarios = await _usuarioService.GetActivosAsync();
+            return Ok(usuarios);
         }
 
-        // GET api/usuarios/{id}
         [Authorize(Roles = "Oficina, Encargado")]
         [HttpGet("{id}")]
-        public async Task<ActionResult<UsuarioDTO>> GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var usuario = await _usuarioRepository.GetByIdAsync(id);
+            var usuario = await _usuarioService.GetByIdAsync(id);
             if (usuario == null) return NotFound();
-
-            var dto = new UsuarioDTO
-            {
-                Id = usuario.Id,
-                Nombre = usuario.Nombre,
-                Apellido = usuario.Apellido,
-                Estado = usuario.Estado.ToString(),
-                Rol = usuario.Rol.ToString()
-            };
-
-            return Ok(dto);
+            return Ok(usuario);
         }
 
-        // POST api/usuarios
         [Authorize(Roles = "Oficina")]
         [HttpPost]
-        public async Task<ActionResult> Create(UsuarioCreateDTO dto)
+        public async Task<IActionResult> Create([FromBody] UsuarioCreateDTO dto)
         {
-            var usuario = new Usuario
-            {
-                Nombre = dto.Nombre,
-                Apellido = dto.Apellido,
-                Dni = dto.Dni,
-                Direccion = dto.Direccion,
-                Telefono = dto.Telefono,
-                FechaIngreso = dto.FechaIngreso,
-                NombreUsuario = dto.NombreUsuario,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                Estado = Enum.Parse<Domain.Enums.EstadoEmpleado>(dto.Estado),
-                Rol = Enum.Parse<Domain.Enums.Rol>(dto.Rol)
-            };
-
-            await _usuarioRepository.AddAsync(usuario);
-            return CreatedAtAction(nameof(GetById), new { id = usuario.Id }, null);
+            var usuario = await _usuarioService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = usuario.Id }, usuario);
         }
 
-        // PUT api/usuarios/{id}
         [Authorize(Roles = "Oficina")]
         [HttpPut("{id}")]
-        public async Task<ActionResult> Update(int id, UsuarioCreateDTO dto)
+        public async Task<IActionResult> Update(int id, [FromBody] UsuarioCreateDTO dto)
         {
-            var usuario = await _usuarioRepository.GetByIdAsync(id);
-            if (usuario == null) return NotFound();
-
-            usuario.Nombre = dto.Nombre;
-            usuario.Apellido = dto.Apellido;
-            usuario.Dni = dto.Dni;
-            usuario.Direccion = dto.Direccion;
-            usuario.Telefono = dto.Telefono;
-            usuario.FechaIngreso = dto.FechaIngreso;
-            usuario.NombreUsuario = dto.NombreUsuario;
-            usuario.Estado = Enum.Parse<Domain.Enums.EstadoEmpleado>(dto.Estado);
-            usuario.Rol = Enum.Parse<Domain.Enums.Rol>(dto.Rol);
-
-            if (!string.IsNullOrWhiteSpace(dto.Password))
-            {
-                usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-            }
-
-            await _usuarioRepository.UpdateAsync(usuario);
+            await _usuarioService.UpdateAsync(id, dto);
             return NoContent();
         }
-        //baja logica de empleado
+
         [Authorize(Roles = "Oficina")]
         [HttpDelete("{id}")]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var usuario = await _usuarioRepository.GetByIdAsync(id);
-            if (usuario == null) return NotFound();
-            usuario.Estado = EstadoEmpleado.Inactivo;
-            await _usuarioRepository.UpdateAsync(usuario);
+            await _usuarioService.DeleteAsync(id);
             return NoContent();
         }
-
     }
 }

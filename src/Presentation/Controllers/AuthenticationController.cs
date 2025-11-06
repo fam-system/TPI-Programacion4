@@ -25,7 +25,7 @@ namespace Presentation.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<IActionResult> Authenticate([FromBody] CredentialsDtoRequest credentials)
+        public async Task<IActionResult> Authenticate([FromBody] AuthenticationRequest credentials)
         {
             if (credentials == null || string.IsNullOrEmpty(credentials.usuario) || string.IsNullOrEmpty(credentials.password))
                 return BadRequest("Debe ingresar usuario y contraseña.");
@@ -53,7 +53,7 @@ namespace Presentation.Controllers
                 new Claim("rol", user.Rol.ToString())
             };
 
-            //Generar el token JWT
+            
             var token = new JwtSecurityToken(
                 issuer: _config["Authentication:Issuer"],
                 audience: _config["Authentication:Audience"],
@@ -62,7 +62,7 @@ namespace Presentation.Controllers
                 signingCredentials: credentialsFirma
             );
 
-            //Convertir token a string
+            
             var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
             //Retornar token y datos básicos del usuario

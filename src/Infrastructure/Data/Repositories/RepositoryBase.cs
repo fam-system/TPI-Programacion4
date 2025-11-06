@@ -13,9 +13,14 @@ public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
         _dbContext = dbContext;
 
     }
+    public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Set<T>().ToListAsync(cancellationToken);
+    }
+
     public virtual async Task<T?> GetByIdAsync<TId>(TId id, CancellationToken cancellationToken = default) where TId : notnull
     {
-        return await _dbContext.Set<T>().FindAsync(new object[] { id }, cancellationToken: cancellationToken);
+        return await _dbContext.Set<T>().FindAsync(new object[] { id }, cancellationToken);
     }
 
     public virtual async Task<List<T>> ListAsync(CancellationToken cancellationToken = default)
@@ -51,5 +56,5 @@ public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
     {
         return await _dbContext.SaveChangesAsync(cancellationToken);
     }
-
 }
+

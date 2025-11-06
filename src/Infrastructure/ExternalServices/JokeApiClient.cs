@@ -15,7 +15,7 @@ public class JokeApiClient : IJokeService
 
     public async Task<List<JokeDTO>> GetJokesAsync()
     {
-        var response = await _httpClient.GetAsync("https://official-joke-api.appspot.com/random_ten");
+        var response = await _httpClient.GetAsync("random_ten");
 
         if (!response.IsSuccessStatusCode)
             return new List<JokeDTO>();

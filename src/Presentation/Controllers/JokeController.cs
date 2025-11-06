@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+
 [ApiController]
 [Route("api/[controller]")]
 public class JokesController : ControllerBase
@@ -12,7 +13,7 @@ public class JokesController : ControllerBase
     {
         _jokeService = jokeService;
     }
-    [AllowAnonymous]
+
     [HttpGet]
     public async Task<IActionResult> GetJokes()
     {

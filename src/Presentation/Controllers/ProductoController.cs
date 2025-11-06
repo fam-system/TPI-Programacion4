@@ -1,68 +1,58 @@
 ﻿using Application.Interfaces;
-using Application.Models;
+using Application.Models.CreateDTO;
+using Application.Models.UpdateDTO;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("api/[controller]")]
 public class ProductoController : ControllerBase
 {
-    private readonly IProductoRepository _repository;
+    private readonly IProductoService _productoService;
 
-    public ProductoController(IProductoRepository repository)
+    public ProductoController(IProductoService productoService)
     {
-        _repository = repository;
+        _productoService = productoService;
     }
+
     [Authorize(Roles = "Oficina")]
     [HttpGet]
-    public async Task<IEnumerable<Producto>> GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        return await _repository.GetAllAsync();
+        var productos = await _productoService.GetAllAsync();
+        return Ok(productos);
     }
+
     [Authorize(Roles = "Oficina, Encargado, Operario")]
     [HttpGet("{id}")]
-    public async Task<ActionResult<Producto>> GetById(int id)
+    public async Task<IActionResult> GetById(int id)
     {
-        var producto = await _repository.GetByIdAsync(id);
-        if (producto == null) return NotFound();
-        return producto;
+        var producto = await _productoService.GetByIdAsync(id);
+        return producto == null ? NotFound() : Ok(producto);
     }
 
     [Authorize(Roles = "Oficina")]
     [HttpPost]
     public async Task<IActionResult> Add(ProductoCreateDTO dto)
     {
-        var producto = new Producto
-        {
-            Nombre = dto.Nombre
-        };
-        await _repository.AddAsync(producto);
+        var producto = await _productoService.AddAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = producto.Id }, producto);
     }
+
     [Authorize(Roles = "Oficina")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, UpdateProductoDTO dto)
     {
-        var producto = await _repository.GetByIdAsync(id);
-        if (producto == null)
-            return NotFound();
-
-        producto.Nombre = dto.Nombre;
-  
-        await _repository.UpdateAsync(producto);
-
-        return NoContent();
+        var updated = await _productoService.UpdateAsync(id, dto);
+        return updated ? NoContent() : NotFound();
     }
 
     [Authorize(Roles = "Oficina")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var producto = await _repository.GetByIdAsync(id);
-        if (producto == null) return NotFound();
-        await _repository.DeleteAsync(producto);
-        return NoContent();
+        var deleted = await _productoService.DeleteAsync(id);
+        return deleted ? NoContent() : NotFound();
     }
 }

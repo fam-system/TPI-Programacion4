@@ -1,72 +1,76 @@
 ﻿using Application.Interfaces;
-using Application.Models;
+using Application.Models.CreateDTO;
+using Application.Models.UpdateDTO;
 using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Application.Models.UpdateDTO;
 
-[ApiController]
-[Route("api/[controller]")]
-public class ArchivoController : ControllerBase
+namespace Web.Controllers
 {
-    private readonly IArchivoRepository _repository;
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ArchivoController : ControllerBase
+    {
+        private readonly IArchivoService _archivoService;
 
-    public ArchivoController(IArchivoRepository repository)
-    {
-        _repository = repository;
-    }
-    [Authorize(Roles = "Oficina")]
-    [HttpGet]
-    public async Task<IEnumerable<Archivo>> GetAll()
-    {
-        return await _repository.GetAllAsync();
-    }
-    [Authorize(Roles = "Oficina, Encargado, Operario")]
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Archivo>> GetById(int id)
-    {
-        var archivo = await _repository.GetByIdAsync(id);
-        if (archivo == null) return NotFound();
-        return archivo;
-    }
-    [Authorize(Roles= "Oficina")]
-    [HttpPost]
-    public async Task<IActionResult> Add(ArchivoCreateDTO dto)
-    {
-        var archivo = new Archivo
+        public ArchivoController(IArchivoService archivoService)
         {
-            Nombre = dto.Nombre,
-            ProductoId = dto.ProductoId
-        };
-        await _repository.AddAsync(archivo);
-        return CreatedAtAction(nameof(GetById), new { id = archivo.Id }, archivo);
-    }
+            _archivoService = archivoService;
+        }
 
+        [Authorize(Roles = "Oficina")]
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Archivo>>> GetAll()
+        {
+            var archivos = await _archivoService.GetAllAsync();
+            return Ok(archivos);
+        }
 
-    [Authorize(Roles = "Oficina")]
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, UpdateArchivoDTO dto)
-    {
+        [Authorize(Roles = "Oficina, Encargado, Operario")]
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Archivo>> GetById(int id)
+        {
+            var archivo = await _archivoService.GetByIdAsync(id);
+            if (archivo == null) return NotFound();
+            return Ok(archivo);
+        }
 
-        var archivo = await _repository.GetByIdAsync(id);
-        if (archivo == null)
-            return NotFound();
+        [Authorize(Roles = "Oficina")]
+        [HttpPost]
+        public async Task<IActionResult> Add(ArchivoCreateDTO dto)
+        {
+            await _archivoService.AddAsync(dto);
+            return Ok(new { message = "Archivo creado correctamente" });
+        }
 
-        archivo.Nombre = dto.Nombre;
+        [Authorize(Roles = "Oficina")]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, UpdateArchivoDTO dto)
+        {
+            try
+            {
+                await _archivoService.UpdateAsync(id, dto);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
 
-        await _repository.UpdateAsync(archivo);
-
-        return NoContent();
-    }
-
-
-    [Authorize(Roles = "Oficina")]
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var archivo = await _repository.GetByIdAsync(id);
-        if (archivo == null) return NotFound();
-        await _repository.DeleteAsync(archivo);
-        return NoContent();
+        [Authorize(Roles = "Oficina")]
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                await _archivoService.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+        }
     }
 }
