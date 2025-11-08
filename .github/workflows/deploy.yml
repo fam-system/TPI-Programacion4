@@ -2,33 +2,44 @@ name: Deploy API to Azure App Service
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
+    - name: Checkout repo
       uses: actions/checkout@v4
 
-    - name: Setup .NET
+    - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
-    - name: Restore
+    - name: Restore (Presentation)
       run: dotnet restore ./src/Presentation/Presentation.csproj
 
-    - name: Build
+    - name: Build (Presentation)
       run: dotnet build ./src/Presentation/Presentation.csproj --no-restore --configuration Release
 
-    - name: Publish
+    - name: Publish (Presentation)
       run: dotnet publish ./src/Presentation/Presentation.csproj -c Release -o ./publish
 
-    - name: Deploy to Azure WebApp (Zip Deploy)
+    - name: Show publish folder (debug)
+      run: |
+        echo "=== Published files ==="
+        ls -la ./publish || true
+        echo "=== Show Presentation.dll info ==="
+        if [ -f ./publish/Presentation.dll ]; then
+          ls -lh ./publish/Presentation.dll
+        else
+          echo "Presentation.dll NOT found!"
+        fi
+
+    - name: Deploy to Azure WebApp (Linux)
       uses: azure/webapps-deploy@v3
       with:
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: ./publish
-        type: zip
