@@ -1,12 +1,13 @@
-﻿using Domain.Entities;
+﻿using Application.Models;
+using Application.Models.CreateDTO;
 
 namespace Application.Interfaces
 {
     public interface IProcesoService
     {
-        Task<IEnumerable<Proceso>> GetAllAsync();
-        Task<Proceso?> GetByIdAsync(int id);
-        Task AddAsync(Proceso proceso);
+        Task<IEnumerable<ProcesoDTO>> GetAllAsync();
+        Task<ProcesoDTO?> GetByIdAsync(int id);
+        Task<ProcesoDTO> CreateAsync(ProcesoCreateDTO dto);
         Task StartProcesoAsync(int id);
         Task EndProcesoAsync(int id);
         Task DeleteAsync(int id);

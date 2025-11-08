@@ -13,7 +13,7 @@ namespace Application.Models.CreateDTO
         [MaxLength(50)]
         public string Nombre { get; set; }
 
-        [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
+        [Required]
         public int CantidadProducto { get; set; }
 
         [Required]

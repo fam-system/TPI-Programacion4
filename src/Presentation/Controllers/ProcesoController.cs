@@ -1,7 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Models;
 using Application.Models.CreateDTO;
-using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,19 +21,8 @@ namespace Web.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(ProcesoCreateDTO dto)
         {
-            var proceso = new Proceso
-            {
-                Nombre = dto.Nombre,
-                CantidadProducto = dto.CantidadProducto,
-                FechaEntrega = dto.FechaEntrega ?? DateTime.Now,
-                ProductoId = dto.ProductoId,
-                FechaInicio = null,
-                FechaFin = null,
-                EstadoProceso = "Pendiente"
-            };
-
-            await _procesoService.AddAsync(proceso);
-            return CreatedAtAction(nameof(GetById), new { id = proceso.Id }, proceso);
+            var created = await _procesoService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         [Authorize(Roles = "Oficina, Encargado")]
@@ -42,42 +30,16 @@ namespace Web.Controllers
         public async Task<ActionResult<IEnumerable<ProcesoDTO>>> GetAll()
         {
             var procesos = await _procesoService.GetAllAsync();
-
-            var result = procesos.Select(p => new ProcesoDTO
-            {
-                Id = p.Id,
-                Nombre = p.Nombre,
-                FechaInicio = p.FechaInicio,
-                FechaFin = p.FechaFin,
-                CantidadProducto = p.CantidadProducto,
-                EstadoProceso = p.EstadoProceso,
-                FechaEntrega = p.FechaEntrega,
-                ProductoId = p.ProductoId
-            });
-
-            return Ok(result);
+            return Ok(procesos);
         }
 
         [Authorize(Roles = "Oficina, Encargado, Operario")]
         [HttpGet("{id}")]
         public async Task<ActionResult<ProcesoDTO>> GetById(int id)
         {
-            var p = await _procesoService.GetByIdAsync(id);
-            if (p == null) return NotFound();
-
-            var dto = new ProcesoDTO
-            {
-                Id = p.Id,
-                Nombre = p.Nombre,
-                FechaInicio = p.FechaInicio,
-                FechaFin = p.FechaFin,
-                CantidadProducto = p.CantidadProducto,
-                EstadoProceso = p.EstadoProceso,
-                FechaEntrega = p.FechaEntrega,
-                ProductoId = p.ProductoId
-            };
-
-            return Ok(dto);
+            var proceso = await _procesoService.GetByIdAsync(id);
+            if (proceso == null) return NotFound();
+            return Ok(proceso);
         }
 
         [Authorize(Roles = "Operario")]

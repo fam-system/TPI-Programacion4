@@ -1,4 +1,6 @@
 ﻿using Application.Interfaces;
+using Application.Models;
+using Application.Models.CreateDTO;
 using Domain.Entities;
 
 namespace Application.Services
@@ -12,20 +14,39 @@ namespace Application.Services
             _procesoRepository = procesoRepository;
         }
 
-        public async Task<IEnumerable<Proceso>> GetAllAsync()
-        {
-            return await _procesoRepository.GetAllAsync();
-        }
 
-        public async Task<Proceso?> GetByIdAsync(int id)
+        public async Task<ProcesoDTO> CreateAsync(ProcesoCreateDTO dto)
         {
-            return await _procesoRepository.GetByIdAsync(id);
-        }
+            var proceso = new Proceso
+            {
+                Nombre = dto.Nombre,
+                CantidadProducto = dto.CantidadProducto,
+                FechaEntrega = dto.FechaEntrega ?? DateTime.Now,
+                ProductoId = dto.ProductoId,
+                FechaInicio = null,
+                FechaFin = null,
+                EstadoProceso = "Pendiente"
+            };
 
-        public async Task AddAsync(Proceso proceso)
-        {
             await _procesoRepository.AddAsync(proceso);
+
+            return MapToDTO(proceso);
         }
+
+
+        public async Task<IEnumerable<ProcesoDTO>> GetAllAsync()
+        {
+            var procesos = await _procesoRepository.GetAllAsync();
+            return procesos.Select(MapToDTO);
+        }
+
+
+        public async Task<ProcesoDTO?> GetByIdAsync(int id)
+        {
+            var proceso = await _procesoRepository.GetByIdAsync(id);
+            return proceso == null ? null : MapToDTO(proceso);
+        }
+
 
         public async Task StartProcesoAsync(int id)
         {
@@ -35,6 +56,7 @@ namespace Application.Services
 
             proceso.FechaInicio = DateTime.Now;
             proceso.EstadoProceso = "En Proceso";
+
             await _procesoRepository.UpdateAsync(proceso);
         }
 
@@ -46,6 +68,7 @@ namespace Application.Services
 
             proceso.FechaFin = DateTime.Now;
             proceso.EstadoProceso = "Finalizado";
+
             await _procesoRepository.UpdateAsync(proceso);
         }
 
@@ -53,9 +76,23 @@ namespace Application.Services
         {
             var proceso = await _procesoRepository.GetByIdAsync(id);
             if (proceso != null)
-            {
                 await _procesoRepository.DeleteAsync(proceso);
-            }
+        }
+
+
+        private static ProcesoDTO MapToDTO(Proceso p)
+        {
+            return new ProcesoDTO
+            {
+                Id = p.Id,
+                Nombre = p.Nombre,
+                FechaInicio = p.FechaInicio,
+                FechaFin = p.FechaFin,
+                CantidadProducto = p.CantidadProducto,
+                EstadoProceso = p.EstadoProceso,
+                FechaEntrega = p.FechaEntrega,
+                ProductoId = p.ProductoId
+            };
         }
     }
 }
