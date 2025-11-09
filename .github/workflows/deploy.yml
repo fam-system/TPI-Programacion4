@@ -1,4 +1,4 @@
-name: Deploy API to Azure App Service
+name: Deploy API to Azure
 
 on:
   push:
@@ -10,36 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-    - name: Setup .NET SDK
-      uses: actions/setup-dotnet@v4
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: '8.0.x'
 
-    - name: Restore (Presentation)
+    - name: Restore dependencies
       run: dotnet restore ./src/Presentation/Presentation.csproj
 
-    - name: Build (Presentation)
-      run: dotnet build ./src/Presentation/Presentation.csproj --no-restore --configuration Release
+    - name: Build
+      run: dotnet build ./src/Presentation/Presentation.csproj --configuration Release --no-restore
 
-    - name: Publish (Presentation)
-      run: dotnet publish ./src/Presentation/Presentation.csproj -c Release -o ./publish
+    - name: Publish
+      run: dotnet publish ./src/Presentation/Presentation.csproj --configuration Release --output ./publish
 
-    - name: Show publish folder (debug)
-      run: |
-        echo "=== Published files ==="
-        ls -la ./publish || true
-        echo "=== Show Presentation.dll info ==="
-        if [ -f ./publish/Presentation.dll ]; then
-          ls -lh ./publish/Presentation.dll
-        else
-          echo "Presentation.dll NOT found!"
-        fi
-
-    - name: Deploy to Azure WebApp (Linux)
+    - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v3
       with:
+        app-name: fam-api-v1-251108
+        slot-name: production
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
         package: ./publish
+
+    - name: Set Clever Cloud connection string in Azure
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: fam-api-v1-251108
+        slot-name: production
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        configuration-strings: DefaultConnection=${{ secrets.CLEVER_DB_CONNECTIONSTRING }}
