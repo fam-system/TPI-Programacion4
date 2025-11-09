@@ -11,7 +11,7 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 
-//CONFIGURACIÓN DE CONEXIÓN A BASE DE DATOS
+//CONFIGURACIÃ“N DE CONEXIÃ“N A BASE DE DATOS
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
@@ -21,7 +21,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 
 
-//INYECCIÓN DE REPOSITORIOS (CAPA DE ACCESO A DATOS)
+//INYECCIÃ“N DE REPOSITORIOS (CAPA DE ACCESO A DATOS)
 
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
@@ -30,7 +30,7 @@ builder.Services.AddScoped<IArchivoRepository, ArchivoRepository>();
 
 
 
-//INYECCIÓN DE SERVICIOS (CAPA DE LÓGICA DE NEGOCIO)
+//INYECCIÃ“N DE SERVICIOS (CAPA DE LÃ“GICA DE NEGOCIO)
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IProductoService, ProductoService>();
@@ -46,7 +46,7 @@ builder.Services.AddScoped<CustomExceptionHandlingMiddleware>();
 
 
 
-//CONFIGURACIÓN DE AUTENTICACIÓN JWT
+//CONFIGURACIÃ“N DE AUTENTICACIÃ“N JWT
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
@@ -65,9 +65,16 @@ builder.Services.AddAuthentication("Bearer")
         };
     });
 
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddAzureKeyVault(
+        new Uri("https://fam-api-kv.vault.azure.net/"),
+        new DefaultAzureCredential()
+    );
+}
 
 
-//CONFIGURACIÓN DE SWAGGER 
+//CONFIGURACIÃ“N DE SWAGGER 
 
 builder.Services.AddSwaggerGen(setupAction =>
 {
@@ -75,7 +82,7 @@ builder.Services.AddSwaggerGen(setupAction =>
     {
         Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
-        Description = "Pegar aquí el token generado al loguearse"
+        Description = "Pegar aquÃ­ el token generado al loguearse"
     });
 
     setupAction.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -94,7 +101,7 @@ builder.Services.AddSwaggerGen(setupAction =>
     });
 });
 
-//CONFIGURACIÓN DE CORS (allowall para usarlo sin configuracion especifica)
+//CONFIGURACIÃ“N DE CORS (allowall para usarlo sin configuracion especifica)
 
 builder.Services.AddCors(options =>
 {
@@ -114,7 +121,7 @@ builder.Services.AddHttpClient<IJokeService, JokeApiClient>(client =>
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
 
-//CONFIGURACIÓN DE CONTROLADORES Y ENDPOINTS
+//CONFIGURACIÃ“N DE CONTROLADORES Y ENDPOINTS
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
